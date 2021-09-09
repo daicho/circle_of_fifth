@@ -1,7 +1,10 @@
 // 円の位置
-final float circle[] = {0.99, 0.79, 0.59, 0.39};
+final float circle[] = {0.99, 0.79, 0.59, 0.39, 0.31};
 
 // コード
+final int code_num = 36;
+PShape[] code_images = new PShape[code_num];
+
 final String[] code_names = {
   "A", "B♭", "B", "C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭",
   "Am", "B♭m", "Bm", "Cm", "C♯m", "Dm", "E♭m", "Em", "Fm", "F♯m", "Gm", "G♯m",
@@ -10,13 +13,13 @@ final String[] code_names = {
 
 final int[][] codes = {
   {3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8},
-  {15, 22, 17, 12, 19, 14, 21, 16, 23, 18, 13, 20},
-  {27, 34, 29, 24, 31, 26, 33, 28, 35, 30, 25, 32}
+  {12, 19, 14, 21, 16, 23, 18, 13, 20, 15, 22, 17},
+  {26, 33, 28, 35, 30, 25, 32, 27, 34, 29, 24, 31}
 };
 
 boolean playing;
 int code_type;
-int code_num;
+int code_pos;
 
 // スクリーン座標系からローカル座標系に変換
 PVector screenToLocal(float x, float y) {
@@ -43,11 +46,12 @@ void setup() {
   ellipseMode(RADIUS);
   stroke(0);
   fill(255);
+  shapeMode(CENTER);
   
-  // フォント
-  PFont font = createFont("游ゴシック Regular", 9);
-  textFont(font);
-  textAlign(CENTER, CENTER);
+  // コードの画像を読み込み
+  for (int i = 0; i < code_num; i++) {
+    code_images[i] = loadShape("codes/code_" + i + ".svg");
+  }
 }
 
 void draw() {
@@ -58,7 +62,7 @@ void draw() {
   background(255);
   
   // 円を描画
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < circle.length; i++)
     ellipse(0, 0, circle[i], circle[i]);
   
   // 線を描画
@@ -74,19 +78,20 @@ void draw() {
   
   // コードを描画
   for (int i = 0; i < 12; i++) {
-    pushMatrix();
-    
-    translate((circle[0] + circle[1]) / 2 * sin(TWO_PI / 12 * i), (circle[0] + circle[1]) / 2 * -cos(TWO_PI / 12 * i));
-    scale(0.01);
-    translate(-0.7, -2.2);
-    
-    
-    
-    popMatrix();
+    for (int j = 0; j < 3; j++) {
+      pushMatrix();
+      
+      translate((circle[j] + circle[j + 1]) / 2 * sin(TWO_PI / 12 * i), (circle[j] + circle[j + 1]) / 2 * -cos(TWO_PI / 12 * i));
+      scale(0.0025);
+      
+      shape(code_images[codes[j][i]]);
+      
+      popMatrix();
+    }
   }
   
   if (playing) {
-    ellipse((circle[code_type] + circle[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_num), (circle[code_type] + circle[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_num), 0.08, 0.08);
+    ellipse((circle[code_type] + circle[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_pos), (circle[code_type] + circle[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_pos), 0.08, 0.08);
   }
 }
 
@@ -99,7 +104,7 @@ void mousePressed() {
     return;
   
   playing = true;
-  code_num = int(a * 12 / TWO_PI + 12) % 12;
+  code_pos = int(a * 12 / TWO_PI + 12) % 12;
   
   for (int i = 0; i < 3; i++) {
     if (r >= circle[i + 1]) {
