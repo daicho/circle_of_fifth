@@ -82,6 +82,7 @@ void setup() {
   minim = new Minim(this);
   sound_out = minim.getLineOut(Minim.STEREO);
   summer = new Summer();
+  summer.patch(sound_out);
   
   for (int i = 0; i < note_num; i++) {
     notes[i] = new Oscil(base_note * pow(2, i / 12.0), 0.3, Waves.SINE);
@@ -166,8 +167,6 @@ void mousePressed() {
   // 音を鳴らす
   for (int i = 1; i < code_notes[code].length; i++)
     notes[code_notes[code][i] + 36].patch(summer);
-  
-  summer.patch(sound_out);
 }
 
 void mouseReleased() {
@@ -175,8 +174,6 @@ void mouseReleased() {
     playing = false;
     
     // 音を止める
-    summer.unpatch(sound_out);
-    
     for (int i = 1; i < code_notes[code].length; i++)
       notes[code_notes[code][i] + 36].unpatch(summer);
   }
