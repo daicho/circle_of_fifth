@@ -3,7 +3,7 @@ import ddf.minim.ugens.*;
 
 
 // 円の位置
-final float circle[] = {0.99, 0.79, 0.59, 0.39, 0.34};
+final float circles[] = {0.99, 0.79, 0.59, 0.39, 0.34};
 
 // コード
 final int code_num = 36;
@@ -15,7 +15,16 @@ final String[] code_names = {
   "Am(♭5)", "A♯m(♭5)", "Bm(♭5)", "Cm(♭5)", "C♯m(♭5)", "Dm(♭5)", "D♯m(♭5)", "Em(♭5)", "Fm(♭5)", "F♯m(♭5)", "Gm(♭5)", "G♯m(♭5)"
 };
 
-final int[][] codes = {
+final int[][] code_notes = {
+  {0, 0, 4, 7}, {1, 1, 5, 8}, {2, 2, 6, 9}, {3, 3, 7, 10}, {4, 4, 8, 11}, {5, 5, 9, 0},
+  {6, 6, 10, 1}, {7, 7, 11, 2}, {8, 8, 0, 3}, {9, 9, 1, 4}, {10, 10, 2, 5}, {11, 11, 3, 6},
+  {0, 0, 3, 7}, {1, 1, 4, 8}, {2, 2, 5, 9}, {3, 3, 6, 10}, {4, 4, 7, 11}, {5, 5, 8, 0},
+  {6, 6, 9, 1}, {7, 7, 10, 2}, {8, 8, 11, 3}, {9, 9, 0, 4}, {10, 10, 1, 5}, {11, 11, 2, 6},
+  {0, 0, 3, 6}, {1, 1, 4, 7}, {2, 2, 5, 8}, {3, 3, 6, 9}, {4, 4, 7, 10}, {5, 5, 8, 11},
+  {6, 6, 9, 0}, {7, 7, 10, 1}, {8, 8, 11, 2}, {9, 9, 0, 3}, {10, 10, 1, 4}, {11, 11, 2, 5}
+};
+
+final int[][] display_codes = {
   {3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8},
   {12, 19, 14, 21, 16, 23, 18, 13, 20, 15, 22, 17},
   {26, 33, 28, 35, 30, 25, 32, 27, 34, 29, 24, 31}
@@ -24,10 +33,12 @@ final int[][] codes = {
 boolean playing;
 int code_type;
 int code_pos;
+int code;
 
 // 音
 Minim minim;
 AudioOutput sound_out;
+Summer summer;
 final float base_note = 27.5;
 final int note_num = 88;
 Oscil[] notes = new Oscil[note_num];
@@ -68,9 +79,11 @@ void setup() {
   // 正弦波を生成
   minim = new Minim(this);
   sound_out = minim.getLineOut(Minim.STEREO);
+  summer = new Summer();
   
-  for (int i = 0; i < note_num; i++)
-    notes[i] = new Oscil(base_note * pow(2, i / 12), 0.5, Waves.SINE);
+  for (int i = 0; i < note_num; i++) {
+    notes[i] = new Oscil(base_note * pow(2, i / 12.0), 0.3, Waves.SINE);
+  }
 }
 
 void draw() {
@@ -81,15 +94,15 @@ void draw() {
   background(255);
   
   // 円を描画
-  for (int i = 0; i < circle.length; i++)
-    ellipse(0, 0, circle[i], circle[i]);
+  for (int i = 0; i < circles.length; i++)
+    ellipse(0, 0, circles[i], circles[i]);
   
   // 線を描画
   pushMatrix();
   rotate(TWO_PI / 24);
   
   for (int i = 0; i < 12; i++) {
-    line(0, circle[0], 0, circle[3]);
+    line(0, circles[0], 0, circles[3]);
     rotate(TWO_PI / 12);
   }
   
@@ -100,41 +113,54 @@ void draw() {
     for (int j = 0; j < 3; j++) {
       pushMatrix();
       
-      translate((circle[j] + circle[j + 1]) / 2 * sin(TWO_PI / 12 * i), (circle[j] + circle[j + 1]) / 2 * -cos(TWO_PI / 12 * i));
+      translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / 12 * i), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / 12 * i));
       scale(0.0025);
       
-      shape(code_images[codes[j][i]]);
+      shape(code_images[display_codes[j][i]]);
       
       popMatrix();
     }
   }
   
   if (playing) {
-    // 音を鳴らす
-    notes[codes[code_type][code_pos]].patch(sound_out);
-    ellipse((circle[code_type] + circle[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_pos), (circle[code_type] + circle[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_pos), 0.08, 0.08);
+    ellipse((circles[code_type] + circles[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_pos), (circles[code_type] + circles[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_pos), 0.08, 0.08);
   }
 }
 
 void mousePressed() {
+  // 位置を取得
   PVector pos = screenToLocal(mouseX, mouseY);
   float r = dist(0, 0, pos.x, pos.y);
   float a = atan2(pos.x, -pos.y) + TWO_PI / 24;
   
-  if (r > circle[0] || r < circle[3])
+  if (r > circles[0] || r < circles[3])
     return;
   
-  playing = true;
-  code_pos = int(a * 12 / TWO_PI + 12) % 12;
-  
+  // コードを取得
   for (int i = 0; i < 3; i++) {
-    if (r >= circle[i + 1]) {
+    if (r >= circles[i + 1]) {
       code_type = i;
       break;
     }
   }
+  
+  playing = true;
+  code_pos = int(a * 12 / TWO_PI + 12) % 12;
+  code = display_codes[code_type][code_pos];
+  
+  // 音を鳴らす
+  summer = new Summer();
+  
+  for (int i = 1; i < code_notes[code].length; i++) {
+    notes[code_notes[code][i] + 36].patch(summer);
+  }
+  
+  summer.patch(sound_out);
 }
 
 void mouseReleased() {
-  playing = false;
+  if (playing) {
+    playing = false;
+    summer.unpatch(sound_out);
+  }
 }
