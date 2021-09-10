@@ -2,7 +2,11 @@ import ddf.minim.*;
 import ddf.minim.ugens.*;
 
 
-// 円の位置
+// 描画
+final color back_color = color(255, 255, 255);
+final color note_color = color(240, 240, 240);
+final color play_color = color(255, 191, 191);
+
 final float circles[] = {0.99, 0.79, 0.59, 0.39, 0.34};
 
 // コード
@@ -68,8 +72,6 @@ void setup() {
   strokeWeight(0.004);
   strokeCap(SQUARE);
   ellipseMode(RADIUS);
-  stroke(0);
-  fill(255);
   shapeMode(CENTER);
   
   // コードの画像を読み込み
@@ -91,15 +93,33 @@ void draw() {
   translate(width / 2.0, height / 2.0);
   scale(min(width, height) / 2.0, min(width, height) / 2.0);
   
-  background(255);
+  background(back_color);
   
   // 円を描画
+  noStroke();
+  
+  for (int i = 0; i < circles.length - 1; i++) {
+    fill(note_color);
+    ellipse(0, 0, circles[i], circles[i]);
+    
+    if (playing && code_type == i) {
+      fill(play_color);
+      arc(0, 0, circles[i], circles[i], TWO_PI / 12 * (code_pos - 3.5), TWO_PI / 12 * (code_pos - 2.5));
+    }
+  }
+  
+  fill(back_color);
+  ellipse(0, 0, circles[circles.length - 1], circles[circles.length - 1]);
+  
+  stroke(0);
+  noFill();
+  
   for (int i = 0; i < circles.length; i++)
     ellipse(0, 0, circles[i], circles[i]);
-  
+    
   // 線を描画
   pushMatrix();
-  rotate(TWO_PI / 24);
+  rotate(-TWO_PI / 24);
   
   for (int i = 0; i < 12; i++) {
     line(0, circles[0], 0, circles[3]);
@@ -112,7 +132,6 @@ void draw() {
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 3; j++) {
       pushMatrix();
-      
       translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / 12 * i), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / 12 * i));
       scale(0.0025);
       
@@ -120,10 +139,6 @@ void draw() {
       
       popMatrix();
     }
-  }
-  
-  if (playing) {
-    ellipse((circles[code_type] + circles[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_pos), (circles[code_type] + circles[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_pos), 0.08, 0.08);
   }
 }
 
@@ -149,11 +164,8 @@ void mousePressed() {
   code = display_codes[code_type][code_pos];
   
   // 音を鳴らす
-  summer = new Summer();
-  
-  for (int i = 1; i < code_notes[code].length; i++) {
+  for (int i = 1; i < code_notes[code].length; i++)
     notes[code_notes[code][i] + 36].patch(summer);
-  }
   
   summer.patch(sound_out);
 }
@@ -161,6 +173,11 @@ void mousePressed() {
 void mouseReleased() {
   if (playing) {
     playing = false;
+    
+    // 音を止める
     summer.unpatch(sound_out);
+    
+    for (int i = 1; i < code_notes[code].length; i++)
+      notes[code_notes[code][i] + 36].unpatch(summer);
   }
 }
