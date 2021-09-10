@@ -38,6 +38,7 @@ boolean playing;
 int code_type;
 int code_pos;
 int code;
+int center_note = 44;
 
 // 音
 Minim minim;
@@ -54,12 +55,17 @@ PVector screenToLocal(float x, float y) {
   PVector out = new PVector();
   
   PMatrix2D current_matrix = new PMatrix2D();
-  getMatrix(current_matrix);  
+  getMatrix(current_matrix);
   
   current_matrix.invert();
   current_matrix.mult(in, out);
   
   return out;
+}
+
+// ボイジング
+int[] voicing(int[] code_note, int center) {
+  
 }
 
 
