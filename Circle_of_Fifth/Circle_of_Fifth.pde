@@ -1,5 +1,9 @@
+import ddf.minim.*;
+import ddf.minim.ugens.*;
+
+
 // 円の位置
-final float circle[] = {0.99, 0.79, 0.59, 0.39, 0.31};
+final float circle[] = {0.99, 0.79, 0.59, 0.39, 0.34};
 
 // コード
 final int code_num = 36;
@@ -21,6 +25,14 @@ boolean playing;
 int code_type;
 int code_pos;
 
+// 音
+Minim minim;
+AudioOutput sound_out;
+final float base_note = 27.5;
+final int note_num = 88;
+Oscil[] notes = new Oscil[note_num];
+
+
 // スクリーン座標系からローカル座標系に変換
 PVector screenToLocal(float x, float y) {
   PVector in = new PVector(x, y);
@@ -34,6 +46,7 @@ PVector screenToLocal(float x, float y) {
   
   return out;
 }
+
 
 void setup() {
   // ウィンドウ設定
@@ -49,9 +62,15 @@ void setup() {
   shapeMode(CENTER);
   
   // コードの画像を読み込み
-  for (int i = 0; i < code_num; i++) {
+  for (int i = 0; i < code_num; i++)
     code_images[i] = loadShape("codes/code_" + i + ".svg");
-  }
+  
+  // 正弦波を生成
+  minim = new Minim(this);
+  sound_out = minim.getLineOut(Minim.STEREO);
+  
+  for (int i = 0; i < note_num; i++)
+    notes[i] = new Oscil(base_note * pow(2, i / 12), 0.5, Waves.SINE);
 }
 
 void draw() {
@@ -91,6 +110,8 @@ void draw() {
   }
   
   if (playing) {
+    // 音を鳴らす
+    notes[codes[code_type][code_pos]].patch(sound_out);
     ellipse((circle[code_type] + circle[code_type + 1]) / 2 * sin(TWO_PI / 12 * code_pos), (circle[code_type] + circle[code_type + 1]) / 2 * -cos(TWO_PI / 12 * code_pos), 0.08, 0.08);
   }
 }
