@@ -46,6 +46,7 @@ AudioOutput sound_out;
 Summer summer;
 final float base_note = 27.5;
 final int note_num = 88;
+final int octave_num = 12;
 Oscil[] notes = new Oscil[note_num];
 
 
@@ -63,9 +64,58 @@ PVector screenToLocal(float x, float y) {
   return out;
 }
 
+// 転回形
+int[] inversion(int[] code_note, int n) {
+  int[] inverted_code = new int[code_note.length];
+  inverted_code[0] = code_note[0];
+
+  for (int i = 0; i < code_note.length - 1; i++) {
+    int p = (n + i) % (code_note.length - 1) + 1;
+    int note = floor(float(inverted_code[i] - code_note[p] + octave_num) / octave_num) * octave_num + code_note[p];
+    inverted_code[i + 1] = note;
+  }
+  
+  return inverted_code;
+}
+
 // ボイジング
 int[] voicing(int[] code_note, int center) {
+  float min_diff = octave_num;
+  float min_ave = 0;
+  int min_i = 0;
   
+  for (int i = 0; i < code_note.length - 1; i++) {
+    int[] inverted_code = inversion(code_note, i);
+    int sum = 0;
+    float ave;
+    float diff;
+    
+    // 転回コードの重心を算出
+    for (int j = 1; j < inverted_code.length; j++)
+      sum += inverted_code[j];
+    ave = sum / (inverted_code.length - 1);
+    
+    // 中心音からの距離を算出
+    diff = (ave - center) % octave_num;
+    if (abs(diff) > octave_num / 2.0)
+      diff = (diff < 0) ? (diff + octave_num) : (diff - octave_num);
+    
+    // 一番中心音に近いものを残す
+    if (abs(diff) < abs(min_diff)) {
+      min_diff = diff;
+      min_ave = ave;
+      min_i = i;
+    }
+  }
+  
+  // コードを再構成
+  int offset = round(center + min_diff - min_ave);
+  int[] voiced_code = inversion(code_note, min_i);
+  
+  for (int i = 0; i < voiced_code.length; i++)
+    voiced_code[i] = voiced_code[i] + offset;
+  
+  return voiced_code;
 }
 
 
@@ -91,7 +141,7 @@ void setup() {
   summer.patch(sound_out);
   
   for (int i = 0; i < note_num; i++) {
-    notes[i] = new Oscil(base_note * pow(2, i / 12.0), 0.3, Waves.SINE);
+    notes[i] = new Oscil(base_note * pow(2, i / float(octave_num)), 0.3, Waves.SINE);
   }
 }
 
@@ -111,7 +161,7 @@ void draw() {
     
     if (playing && code_type == i) {
       fill(play_color);
-      arc(0, 0, circles[i], circles[i], TWO_PI / 12 * (code_pos - 3.5), TWO_PI / 12 * (code_pos - 2.5));
+      arc(0, 0, circles[i], circles[i], TWO_PI / octave_num * (code_pos - 3.5), TWO_PI / octave_num * (code_pos - 2.5));
     }
   }
   
@@ -126,20 +176,20 @@ void draw() {
     
   // 線を描画
   pushMatrix();
-  rotate(-TWO_PI / 24);
+  rotate(-TWO_PI / octave_num / 2);
   
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < octave_num; i++) {
     line(0, circles[0], 0, circles[3]);
-    rotate(TWO_PI / 12);
+    rotate(TWO_PI / octave_num);
   }
   
   popMatrix();
   
   // コードを描画
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < octave_num; i++) {
     for (int j = 0; j < 3; j++) {
       pushMatrix();
-      translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / 12 * i), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / 12 * i));
+      translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / octave_num * i), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / octave_num * i));
       scale(0.0025);
       
       shape(code_images[display_codes[j][i]]);
@@ -153,7 +203,7 @@ void mousePressed() {
   // 位置を取得
   PVector pos = screenToLocal(mouseX, mouseY);
   float r = dist(0, 0, pos.x, pos.y);
-  float a = atan2(pos.x, -pos.y) + TWO_PI / 24;
+  float a = atan2(pos.x, -pos.y) + TWO_PI / octave_num / 2;
   
   if (r > circles[0] || r < circles[3])
     return;
@@ -167,12 +217,13 @@ void mousePressed() {
   }
   
   playing = true;
-  code_pos = int(a * 12 / TWO_PI + 12) % 12;
+  code_pos = int(a * octave_num / TWO_PI + octave_num) % octave_num;
   code = display_codes[code_type][code_pos];
   
   // 音を鳴らす
-  for (int i = 1; i < code_notes[code].length; i++)
-    notes[code_notes[code][i] + 36].patch(summer);
+  int[] voiced_code = voicing(code_notes[code], center_note);
+  for (int i = 0; i < voiced_code.length; i++)
+    notes[voiced_code[i]].patch(summer);
 }
 
 void mouseReleased() {
@@ -180,7 +231,8 @@ void mouseReleased() {
     playing = false;
     
     // 音を止める
-    for (int i = 1; i < code_notes[code].length; i++)
-      notes[code_notes[code][i] + 36].unpatch(summer);
+    int[] voiced_code = voicing(code_notes[code], center_note);
+    for (int i = 0; i < voiced_code.length; i++)
+      notes[voiced_code[i]].unpatch(summer);
   }
 }
