@@ -1,7 +1,6 @@
 import ddf.minim.*;
 import ddf.minim.ugens.*;
 
-
 // 描画
 final color back_color = color(255, 255, 255);
 final color note_color = color(240, 240, 240);
@@ -10,14 +9,14 @@ final color play_color = color(255, 191, 191);
 final float circles[] = {0.99, 0.79, 0.59, 0.39, 0.34};
 
 // 音
-Minim minim;
-AudioOutput sound_out;
 final float base_note = 27.5;
 final int note_num = 88;
 final int octave_num = 12;
 final int center_note = 44;
-final float fade_time = 0.75;
-final float volume = 0.1;
+final float fade_time = 0.1;
+final float volume = 0.3;
+Minim minim;
+AudioOutput sound_out;
 Note[] notes = new Note[note_num];
 
 // コード
@@ -141,8 +140,6 @@ void setup() {
 
   for (int i = 0; i < note_num; i++)
     notes[i] = new Note(base_note * pow(2, i / float(octave_num)), volume, fade_time, sound_out);
-    
-  thread("update");
 }
 
 void draw() {
@@ -195,20 +192,6 @@ void draw() {
       shape(code_images[display_codes[j][i]]);
 
       popMatrix();
-    }
-  }
-}
-
-void update() {
-  // 音を更新
-  while (true) {
-    for (int i = 0; i < note_num; i++)
-      notes[i].update();
-    
-    try {
-      Thread.sleep(1);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
     }
   }
 }

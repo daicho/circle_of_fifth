@@ -52,7 +52,7 @@ void setup(){
 }
 
 void keyPressed(){
-  out.playNote(0.0, 0.3, new MyInstrument());
+  out.playNote(0.0, 1, new MyInstrument());
 }
 
 void draw(){
@@ -63,8 +63,8 @@ class MyInstrument implements Instrument {
   Oscil osc;
   ADSR adsr;
   MyInstrument(){
-    osc = new Oscil(random(200, 800), 0.5, Waves.TRIANGLE);
-    adsr = new ADSR(0.5, attack, decay, sustain, release);
+    osc = new Oscil(440, 0.5, Waves.SINE);
+    adsr = new ADSR(0.5, 0, 0, 1, 0.1);
     osc.patch(adsr);
   }
   
