@@ -1,5 +1,8 @@
-/*
-* sample04
+/**
+* ADSR controlled by GUI
+*
+* @author aa_debdeb
+* @date 2016/10/31
 */
 
 import ddf.minim.spi.*;
@@ -8,43 +11,70 @@ import ddf.minim.*;
 import ddf.minim.analysis.*;
 import ddf.minim.ugens.*;
 import ddf.minim.effects.*;
+import controlP5.*;
 
 Minim minim;
 AudioOutput out;
+ControlP5 cp5;
+
+float attack, decay, sustain, release;
 
 void setup(){
-  size(512, 200);
+  size(400, 300);
   minim = new Minim(this);
   out = minim.getLineOut();
+  cp5 = new ControlP5(this);
+  float radius = 30;
+  cp5.addKnob("attack")
+     .setRange(0, 3.0)
+     .setValue(1.5)
+     .setPosition(50 - radius, height / 2 - radius)
+     .setRadius(radius)
+     .setDragDirection(Knob.VERTICAL); 
+  cp5.addKnob("decay")
+     .setRange(0, 3.0)
+     .setValue(1.5)
+     .setPosition(150 - radius, height / 2 - radius)
+     .setRadius(radius)
+     .setDragDirection(Knob.VERTICAL); 
+  cp5.addKnob("sustain")
+     .setRange(0, 1.0)
+     .setValue(0.5)
+     .setPosition(250 - radius, height / 2 - radius)
+     .setRadius(radius)
+     .setDragDirection(Knob.VERTICAL); 
+  cp5.addKnob("release")
+     .setRange(0, 3.0)
+     .setValue(1.5)
+     .setPosition(350 - radius, height / 2 - radius)
+     .setRadius(radius)
+     .setDragDirection(Knob.VERTICAL); 
 }
 
-void mousePressed(){
-  out.playNote(0.0, 0.5, new MyInstrument(Frequency.ofPitch("C4").asHz(), 0.5));
-  out.playNote(0.5, 1.0, new MyInstrument(Frequency.ofPitch("D4").asHz(), 0.75));
-  out.playNote(1.5, 1.5, new MyInstrument(Frequency.ofPitch("E4").asHz(), 1.0));
+void keyPressed(){
+  out.playNote(0.0, 0.3, new MyInstrument());
 }
 
 void draw(){
-  background(0);
-  stroke(255);
-  strokeWeight(1);
-  for(int i = 0; i < out.bufferSize() - 1; i++){
-    line(i, 50 + out.left.get(i) * 50, i + 1, 50 + out.left.get(i + 1) * 50);
-    line(i, 150 + out.right.get(i) * 50, i + 1, 150 + out.right.get(i + 1) * 50);
-  }
+
 }
 
-class MyInstrument implements Instrument{
-  Oscil oscil;
-  MyInstrument(float frequency, float amplitude){
-    oscil = new Oscil(frequency, amplitude, Waves.SINE);
+class MyInstrument implements Instrument {
+  Oscil osc;
+  ADSR adsr;
+  MyInstrument(){
+    osc = new Oscil(random(200, 800), 0.5, Waves.TRIANGLE);
+    adsr = new ADSR(0.5, attack, decay, sustain, release);
+    osc.patch(adsr);
   }
   
-  void noteOn(float duration){
-    oscil.patch(out);
+  void noteOn(float dur){
+    adsr.noteOn();
+    adsr.patch(out);
   }
   
   void noteOff(){
-    oscil.unpatch(out);
-  } 
+    adsr.unpatchAfterRelease(out);
+    adsr.noteOff();
+  }
 }

@@ -4,7 +4,6 @@ import ddf.minim.ugens.*;
 public class Note {
   private float frequency;
   private float set_volume;
-  private float fade_time;
   private float fade_speed;
   private AudioOutput out;
   private Oscil oscil;
@@ -16,7 +15,6 @@ public class Note {
   public Note(float frequency, float set_volume, float fade_time, AudioOutput out) {
     this.frequency = frequency;
     this.set_volume = set_volume;
-    this.fade_time = fade_time;
     this.fade_speed = set_volume / fade_time / 1000;
     this.out = out;
     this.oscil = new Oscil(frequency, volume, Waves.SINE);
@@ -39,6 +37,8 @@ public class Note {
 
   // 一時停止
   public void pause() {
+    if (!playing) return;
+
     playing = false;
     fading = true;
     prev_time = millis();
@@ -55,7 +55,7 @@ public class Note {
     // フェードアウト
     volume -= time_diff * fade_speed;
 
-    if (volume <= 0) {
+    if (volume <= 0.01) {
       volume = 0;
       fading = false;
       oscil.unpatch(out);
