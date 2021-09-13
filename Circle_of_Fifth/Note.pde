@@ -1,6 +1,7 @@
 import ddf.minim.*;
 import ddf.minim.ugens.*;
 
+// 音
 public class Note {
   private Oscil oscil;
   private ADSR adsr;
