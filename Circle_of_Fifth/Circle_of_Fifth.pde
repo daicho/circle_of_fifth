@@ -3,8 +3,10 @@ import ddf.minim.ugens.*;
 
 // 描画
 color back_color = color(255, 255, 255);
-color note_color = color(240, 240, 240);
-color play_color = color(255, 191, 191);
+color note_color = color(214, 214, 214);
+color play_color = color(255, 159, 159);
+color stroke_color = color(255, 255, 255);
+float stroke_weight = 0.01;
 
 float circles[] = {0.99, 0.79, 0.59, 0.39, 0.34};
 
@@ -94,7 +96,7 @@ void setup() {
   surface.setResizable(true);
 
   // 描画設定
-  strokeWeight(0.004);
+  strokeWeight(stroke_weight);
   strokeCap(SQUARE);
   ellipseMode(RADIUS);
   shapeMode(CENTER);
@@ -121,7 +123,7 @@ void draw() {
   // 円を描画
   noStroke();
 
-  for (int i = 0; i < circles.length - 1; i++) {
+  for (int i = 0; i < 3; i++) {
     fill(note_color);
     ellipse(0, 0, circles[i], circles[i]);
 
@@ -131,10 +133,13 @@ void draw() {
     }
   }
 
-  fill(back_color);
-  ellipse(0, 0, circles[circles.length - 1], circles[circles.length - 1]);
+  fill(note_color);
+  ellipse(0, 0, circles[3], circles[3]);
 
-  stroke(0);
+  fill(back_color);
+  ellipse(0, 0, circles[4], circles[4]);
+
+  stroke(stroke_color);
   noFill();
 
   for (int i = 0; i < circles.length; i++)

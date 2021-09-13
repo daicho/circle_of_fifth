@@ -1,5 +1,5 @@
 public class Code {
-  private String name;
+  public String name;
   private int base;
   private int[] notes;
 
