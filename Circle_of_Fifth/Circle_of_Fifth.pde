@@ -26,29 +26,8 @@ Minim minim;
 AudioOutput sound_out;
 Note[] notes = new Note[NOTE_NUM];
 
-final int[][][] display_codes = {
-  {
-    {3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8},
-    {12, 19, 14, 21, 16, 23, 18, 13, 20, 15, 22, 17},
-    {26, 33, 28, 35, 30, 25, 32, 27, 34, 29, 24, 31}
-  },
-  {
-    {39, 46, 41, 36, 43, 38, 45, 40, 47, 42, 37, 44},
-    {48, 55, 50, 57, 52, 59, 54, 49, 56, 51, 58, 53},
-    {62, 69, 64, 71, 66, 61, 68, 63, 70, 65, 60, 67}
-  },
-  {
-    {75, 82, 77, 72, 79, 74, 81, 76, 83, 78, 73, 80},
-    {84, 91, 86, 93, 88, 95, 90, 85, 92, 87, 94, 89},
-    {98, 105, 100, 107, 102, 97, 104, 99, 106, 101, 96, 103}
-  }
-};
-
-PShape[] code_images;
-boolean playing = false;
-int code_type = 0;
-int code_row = 0;
-int code_pos = 0;
+// 五度圏表
+Circle circle;
 
 // スクリーン座標系からローカル座標系に変換
 PVector screenToLocal(float x, float y) {
@@ -79,17 +58,14 @@ void setup() {
   // フォント
   textFont(createFont("Arial", 24));
 
-  // コードの画像を読み込み
-  code_images = new PShape[codes.length];
-  for (int i = 0; i < codes.length; i++)
-    code_images[i] = loadShape("codes/code_" + i + ".svg");
-
   // 音の設定
   minim = new Minim(this);
   sound_out = minim.getLineOut(Minim.STEREO);
 
   for (int i = 0; i < NOTE_NUM; i++)
     notes[i] = new Note(BASE_NOTE * pow(2, i / float(OCTAVE_NUM)), volume, fade_time, sound_out);
+
+  circle = new Circle(0, 0, 1);
 }
 
 void draw() {
@@ -104,58 +80,8 @@ void draw() {
 
   background(back_color);
 
-  // 円を描画
-  pushMatrix();
-  rotate(cur_angle);
-
-  noStroke();
-
-  for (int i = 0; i < 3; i++) {
-    fill(note_color);
-    ellipse(0, 0, circles[i], circles[i]);
-
-    if (playing && code_row == i) {
-      fill(play_color);
-      arc(0, 0, circles[i], circles[i], TWO_PI / OCTAVE_NUM * (code_pos - 3.5), TWO_PI / OCTAVE_NUM * (code_pos - 2.5));
-    }
-  }
-
-  fill(note_color);
-  ellipse(0, 0, circles[3], circles[3]);
-
-  fill(back_color);
-  ellipse(0, 0, circles[4], circles[4]);
-
-  stroke(stroke_color);
-  noFill();
-
-  for (int i = 0; i < circles.length; i++)
-    ellipse(0, 0, circles[i], circles[i]);
-
-  // 線を描画
-  pushMatrix();
-  rotate(-TWO_PI / OCTAVE_NUM / 2);
-
-  for (int i = 0; i < OCTAVE_NUM; i++) {
-    line(0, circles[0], 0, circles[3]);
-    rotate(TWO_PI / OCTAVE_NUM);
-  }
-
-  popMatrix();
-  popMatrix();
-
-  // コードを描画
-  for (int i = 0; i < OCTAVE_NUM; i++) {
-    for (int j = 0; j < 3; j++) {
-      pushMatrix();
-      translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / OCTAVE_NUM * i + cur_angle), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / OCTAVE_NUM * i + cur_angle));
-      scale(0.0022);
-
-      shape(code_images[display_codes[code_type][j][i]]);
-
-      popMatrix();
-    }
-  }
+  // 五度圏表を描画
+  circle.draw();
   
   // 中心音
   pushMatrix();
