@@ -152,9 +152,9 @@ public class Code {
       ave = sum / inverted_notes.length;
 
       // 中心音からの距離を算出
-      diff = (ave - center) % OCTAVE_NUM;
-      if (abs(diff) > OCTAVE_NUM / 2.0)
-        diff = (diff < 0) ? (diff + OCTAVE_NUM) : (diff - OCTAVE_NUM);
+      diff = modOctave(ave - center);
+      if (diff > OCTAVE_NUM / 2.0)
+        diff = diff - OCTAVE_NUM;
 
       // 一番中心音に近いものを残す
       if (abs(diff) < abs(min_diff)) {

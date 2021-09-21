@@ -1,8 +1,17 @@
 public class Circle {
+  private float x;
+  private float y;
+  private float size;
+
   private final float stroke_weight = 0.01;
   private final float circles[] = {1.0, 0.8, 0.6, 0.4, 0.35};
-  private float cur_angle = 0;
   private float angle = 0;
+  private PShape[] code_images;
+
+  private boolean on = false;
+  private int code_type = 0;
+  private int code_row = 0;
+  private int code_pos = 0;
   private int key_note = 0;
 
   public int[][][] display_codes = {
@@ -22,17 +31,6 @@ public class Circle {
       {98, 105, 100, 107, 102, 97, 104, 99, 106, 101, 96, 103}
     }
   };
-
-  private PShape[] code_images;
-  private boolean on = false;
-  public int code = 0;
-  public int code_type = 0;
-  public int code_row = 0;
-  public int code_pos = 0;
-
-  private float x;
-  private float y;
-  private float size;
 
   public Circle(float x, float y, float size) {
     this.x = x;
@@ -56,7 +54,7 @@ public class Circle {
     scale(size);
 
     pushMatrix();
-    rotate(cur_angle);
+    rotate(angle);
 
     // 円を描画
     noStroke();
@@ -100,7 +98,7 @@ public class Circle {
     for (int i = 0; i < OCTAVE_NUM; i++) {
       for (int j = 0; j < 3; j++) {
         pushMatrix();
-        translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / OCTAVE_NUM * i + cur_angle), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / OCTAVE_NUM * i + cur_angle));
+        translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / OCTAVE_NUM * i + angle), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / OCTAVE_NUM * i + angle));
         scale(0.0022);
 
         shape(code_images[display_codes[code_type][j][i]]);
@@ -135,7 +133,7 @@ public class Circle {
     // 位置を取得
     PVector pos = screenToLocal(mx, my);
     float r = dist(0, 0, pos.x, pos.y);
-    float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
+    float a = atan2(pos.x, -pos.y) - angle;
 
     popMatrix();
 
@@ -168,7 +166,7 @@ public class Circle {
       }
     }
 
-    pos = int(a * OCTAVE_NUM / TWO_PI + OCTAVE_NUM) % OCTAVE_NUM;
+    pos = modOctave(round(a * OCTAVE_NUM / TWO_PI));
     return new int[]{row, pos};
   }
 
@@ -177,7 +175,7 @@ public class Circle {
     int[] pos = getPos(mx, my);
 
     if (pos[1] != -1)
-      pos[1] = (pos[1] + key_note) % OCTAVE_NUM;
+      pos[1] = modOctave(pos[1] - key_note);
 
     return pos;
   }
@@ -192,33 +190,67 @@ public class Circle {
     return display_codes[code_type][pos[0]][pos[1]];
   }
 
-  // void mouseReleased() {
-  //   // 位置を取得
-  //   PVector pos = screenToLocal(mouseX, mouseY);
-  //   float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
+  // コードの種類を変更
+  public void setCodeType(int code_type) {
+    this.code_type = code_type;
+  }
 
-  //   // 音を止める
-  //   if (playing) {
-  //     playing = false;
+  // 点灯
+  public void turnOn(int code_row, int code_pos) {
+    this.code_row = code_row;
+    this.code_pos = code_pos;
+    on = true;
+  }
 
-  //     for (int i = 0; i < NOTE_NUM; i++)
-  //       notes[i].pause();
-  //   }
+  // 相対的な位置を指定して点灯
+  public void turnOnByRelativePos(int code_row, int code_pos) {
+    turnOn(code_row, modOctave(code_pos + key_note));
+  }
 
-  //   // キーを決定する
-  //   if (rotating) {
-  //     rotating = false;
-  //     key_note = (round((angle + a - start_angle) / -TWO_PI * OCTAVE_NUM) + OCTAVE_NUM) % OCTAVE_NUM;
-  //     angle = TWO_PI * -key_note / OCTAVE_NUM;
-  //   }
-  // }
+  // コードを指定して点灯
+  public void turnOnByCode(int code) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 12; k++) {
+          if (display_codes[i][j][k] == code) {
+            setCodeType(i);
+            turnOn(j, k);
+            break;
+          }
+        }
+      }
+    }
+  }
 
-  // void keyPressed() {
-  //   if (keyCode == 37) code_type--;
-  //   if (keyCode == 39) code_type++;
-  //   if (keyCode == 40) center_note--;
-  //   if (keyCode == 38) center_note++;
-  //   code_type = constrain(code_type, 0, 2);
-  //   center_note = constrain(center_note, 36, 52);
-  // }
+  // 座標の位置にあるコードを点灯
+  public void turnOnByPos(float mx, float my) {
+    int[] pos = getPos(mx, my);
+    turnOn(pos[0], pos[1]);
+  }
+
+  // 消灯
+  public void turnOff() {
+    on = false;
+  }
+
+  // 角度を設定
+  public void setAngle(float angle) {
+    this.angle = angle;
+  }
+
+  // 角度を加算
+  public void addAngle(float add_angle) {
+    setAngle(angle + add_angle);
+  }
+
+  // キーを設定
+  public void setKey(int key_note) {
+    this.key_note = key_note;
+  }
+
+  // 現在の角度からキーを設定
+  public void setKeyByAngle() {
+    key_note = modOctave(round(angle / -TWO_PI * OCTAVE_NUM));
+    angle = TWO_PI * -key_note / OCTAVE_NUM;
+  }
 }

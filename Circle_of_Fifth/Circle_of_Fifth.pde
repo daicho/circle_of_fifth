@@ -7,8 +7,7 @@ color note_color = color(214, 214, 214);
 color play_color = color(255, 159, 159);
 color stroke_color = color(255, 255, 255);
 boolean rotating = false;
-float start_angle;
-int key_note = 0;
+float start_angle = 0;
 
 // 音
 final float BASE_NOTE = 27.5;
@@ -18,6 +17,7 @@ final int OCTAVE_NUM = 12;
 float fade_time = 0.1;
 float volume = 0.3;
 int center_note = 44;
+int code_type = 0;
 boolean playing = false;
 
 Minim minim;
@@ -26,6 +26,15 @@ Note[] notes = new Note[NOTE_NUM];
 
 // 五度圏表
 Circle circle;
+
+// 1オクターブに収まるように剰余を求める
+int modOctave(int n) {
+  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+}
+
+float modOctave(float n) {
+  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+}
 
 void setup() {
   // ウィンドウ設定
@@ -54,8 +63,11 @@ void draw() {
   background(back_color);
 
   // 五度圏表を描画
+  if (rotating)
+    circle.addAngle(circle.posToEuler(mouseX, mouseY)[1] - start_angle);
+
   circle.draw();
-  
+
   // 中心音
   pushMatrix();
   translate(0.97, 0.97);
@@ -69,47 +81,50 @@ void draw() {
 
 void mousePressed() {
   if (circle.isHoldingBar(mouseX, mouseY)) {
-
+    rotating = true;
+    start_angle = circle.posToEuler(mouseX, mouseY)[1];
   } else {
     int code = circle.getCode(mouseX, mouseY);
-    println(codes[code].name);
 
     if (code > 0) {
       playing = true;
-    
+
       // 音を鳴らす
       int[] voiced_code = codes[code].voicing(center_note);
       for (int i = 0; i < voiced_code.length; i++)
         notes[voiced_code[i]].play();
+
+      circle.turnOnByCode(code);
     }
   }
 }
 
-// void mouseReleased() {
-//   // 音を止める
-//   if (playing) {
-//     playing = false;
+void mouseReleased() {
+  // 音を止める
+  if (playing) {
+    playing = false;
 
-//     for (int i = 0; i < NOTE_NUM; i++)
-//       notes[i].pause();
-//   }
+    for (int i = 0; i < NOTE_NUM; i++)
+      notes[i].pause();
 
-//   // キーを決定する
-//   if (rotating) {
-//     rotating = false;
-//     key_note = (round((angle + a - start_angle) / -TWO_PI * OCTAVE_NUM) + OCTAVE_NUM) % OCTAVE_NUM;
-//     angle = TWO_PI * -key_note / OCTAVE_NUM;
-//   }
-// }
+    circle.turnOff();
+  }
 
-// void keyPressed() {
-//   if (keyCode == 37) code_type--;
-//   if (keyCode == 39) code_type++;
-//   if (keyCode == 40) center_note--;
-//   if (keyCode == 38) center_note++;
+  // 回転位置を決定する
+  if (rotating) {
+    rotating = false;
+    circle.setKeyByAngle();
+  }
+}
 
-//   code_type = constrain(code_type, 0, 2);
-//   center_note = constrain(center_note, 36, 52);
+void keyPressed() {
+  if (keyCode == 37) code_type--;
+  if (keyCode == 39) code_type++;
+  if (keyCode == 40) center_note--;
+  if (keyCode == 38) center_note++;
 
-//   circle.setCodeType(code_type);
-// }
+  code_type = constrain(code_type, 0, 2);
+  center_note = constrain(center_note, 36, 52);
+
+  circle.setCodeType(code_type);
+}
