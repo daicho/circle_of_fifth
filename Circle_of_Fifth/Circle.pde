@@ -1,10 +1,11 @@
 public class Circle {
   private final float stroke_weight = 0.01;
   private final float circles[] = {1.0, 0.8, 0.6, 0.4, 0.35};
+  private float cur_angle = 0;
   private float angle = 0;
   private int key_note = 0;
 
-  private final int[][][] display_codes = {
+  public int[][][] display_codes = {
     {
       {3, 10, 5, 0, 7, 2, 9, 4, 11, 6, 1, 8},
       {12, 19, 14, 21, 16, 23, 18, 13, 20, 15, 22, 17},
@@ -23,10 +24,11 @@ public class Circle {
   };
 
   private PShape[] code_images;
-  private boolean playing = false;
-  private int code_type = 0;
-  private int code_row = 0;
-  private int code_pos = 0;
+  private boolean on = false;
+  public int code = 0;
+  public int code_type = 0;
+  public int code_row = 0;
+  public int code_pos = 0;
 
   private float x;
   private float y;
@@ -38,7 +40,6 @@ public class Circle {
     this.size = size;
 
     // 描画設定
-    strokeWeight(stroke_weight);
     strokeCap(SQUARE);
     ellipseMode(RADIUS);
     shapeMode(CENTER);
@@ -64,7 +65,7 @@ public class Circle {
       fill(note_color);
       ellipse(0, 0, circles[i] * size, circles[i]);
 
-      if (playing && code_row == i) {
+      if (on && code_row == i) {
         fill(play_color);
         arc(0, 0, circles[i], circles[i], TWO_PI / OCTAVE_NUM * (code_pos - 3.5), TWO_PI / OCTAVE_NUM * (code_pos - 2.5));
       }
@@ -77,6 +78,7 @@ public class Circle {
     ellipse(0, 0, circles[4], circles[4]);
 
     stroke(stroke_color);
+    strokeWeight(stroke_weight);
     noFill();
 
     for (int i = 0; i < circles.length; i++)
@@ -110,68 +112,74 @@ public class Circle {
     popMatrix();
   }
 
-  public void setAngle(float angle) {
-    this.angle = angle;
-  }
+  // public void setAngle(float angle) {
+  //   this.angle = angle;
+  // }
 
-  public int getCode(float mx, float my) {
-    // 位置を取得
-    PVector pos = screenToLocal(mouseX, mouseY);
-    float r = dist(0, 0, pos.x, pos.y);
-    float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
+  // public int getCode(float mx, float my) {
+  //   pushMatrix();
+  //   translate(x, y);
+  //   scale(size);
 
-    if (r > circles[0] || r < circles[4])
-      return;
+  //   // 位置を取得
+  //   PVector pos = screenToLocal(mouseX, mouseY);
+  //   float r = dist(0, 0, pos.x, pos.y);
+  //   float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
 
-    // コードを取得
-    for (int i = 0; i < 4; i++) {
-      if (r >= circles[i + 1]) {
-        code_row = i;
-        break;
-      }
-    }
+  //   if (r > circles[0] || r < circles[4])
+  //     return;
 
-    if (code_row == 3) {
-      rotating = true;
-      start_angle = a;
-    } else {
-      playing = true;
-      code_pos = int(a * OCTAVE_NUM / TWO_PI + OCTAVE_NUM) % OCTAVE_NUM;
+  //   // コードを取得
+  //   for (int i = 0; i < 4; i++) {
+  //     if (r >= circles[i + 1]) {
+  //       code_row = i;
+  //       break;
+  //     }
+  //   }
+
+  //   if (code_row == 3) {
+  //     rotating = true;
+  //     start_angle = a;
+  //   } else {
+  //     playing = true;
+  //     code_pos = int(a * OCTAVE_NUM / TWO_PI + OCTAVE_NUM) % OCTAVE_NUM;
     
-      // 音を鳴らす
-      int[] voiced_code = codes[display_codes[code_type][code_row][code_pos]].voicing(center_note);
-      for (int i = 0; i < voiced_code.length; i++)
-        notes[voiced_code[i]].play();
-    }
-  }
+  //     // 音を鳴らす
+  //     int[] voiced_code = codes[display_codes[code_type][code_row][code_pos]].voicing(center_note);
+  //     for (int i = 0; i < voiced_code.length; i++)
+  //       notes[voiced_code[i]].play();
+  //   }
 
-  void mouseReleased() {
-    // 位置を取得
-    PVector pos = screenToLocal(mouseX, mouseY);
-    float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
+  //   popMatrix();
+  // }
 
-    // 音を止める
-    if (playing) {
-      playing = false;
+  // void mouseReleased() {
+  //   // 位置を取得
+  //   PVector pos = screenToLocal(mouseX, mouseY);
+  //   float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
 
-      for (int i = 0; i < NOTE_NUM; i++)
-        notes[i].pause();
-    }
+  //   // 音を止める
+  //   if (playing) {
+  //     playing = false;
 
-    // キーを決定する
-    if (rotating) {
-      rotating = false;
-      key_note = (round((angle + a - start_angle) / -TWO_PI * OCTAVE_NUM) + OCTAVE_NUM) % OCTAVE_NUM;
-      angle = TWO_PI * -key_note / OCTAVE_NUM;
-    }
-  }
+  //     for (int i = 0; i < NOTE_NUM; i++)
+  //       notes[i].pause();
+  //   }
 
-  void keyPressed() {
-    if (keyCode == 37) code_type--;
-    if (keyCode == 39) code_type++;
-    if (keyCode == 40) center_note--;
-    if (keyCode == 38) center_note++;
-    code_type = constrain(code_type, 0, 2);
-    center_note = constrain(center_note, 36, 52);
-  }
+  //   // キーを決定する
+  //   if (rotating) {
+  //     rotating = false;
+  //     key_note = (round((angle + a - start_angle) / -TWO_PI * OCTAVE_NUM) + OCTAVE_NUM) % OCTAVE_NUM;
+  //     angle = TWO_PI * -key_note / OCTAVE_NUM;
+  //   }
+  // }
+
+  // void keyPressed() {
+  //   if (keyCode == 37) code_type--;
+  //   if (keyCode == 39) code_type++;
+  //   if (keyCode == 40) center_note--;
+  //   if (keyCode == 38) center_note++;
+  //   code_type = constrain(code_type, 0, 2);
+  //   center_note = constrain(center_note, 36, 52);
+  // }
 }
