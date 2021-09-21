@@ -18,6 +18,7 @@ final int OCTAVE_NUM = 12;
 float fade_time = 0.1;
 float volume = 0.3;
 int center_note = 44;
+boolean playing = false;
 
 Minim minim;
 AudioOutput sound_out;
@@ -25,20 +26,6 @@ Note[] notes = new Note[NOTE_NUM];
 
 // 五度圏表
 Circle circle;
-
-// スクリーン座標系からローカル座標系に変換
-PVector screenToLocal(float x, float y) {
-  PVector in = new PVector(x, y);
-  PVector out = new PVector();
-
-  PMatrix2D current_matrix = new PMatrix2D();
-  getMatrix(current_matrix);
-
-  current_matrix.invert();
-  current_matrix.mult(in, out);
-
-  return out;
-}
 
 void setup() {
   // ウィンドウ設定
@@ -80,21 +67,23 @@ void draw() {
   popMatrix();
 }
 
-// void mousePressed() {
-//   int code = circle.getCode(mouseX, mouseY);
+void mousePressed() {
+  if (circle.isHoldingBar(mouseX, mouseY)) {
 
-//   if (code == -1) {
-//     rotating = true;
-//     start_angle = a;
-//   } else if (code > 0) {
-//     playing = true;
-  
-//     // 音を鳴らす
-//     int[] voiced_code = codes[code].voicing(center_note);
-//     for (int i = 0; i < voiced_code.length; i++)
-//       notes[voiced_code[i]].play();
-//   }
-// }
+  } else {
+    int code = circle.getCode(mouseX, mouseY);
+    println(codes[code].name);
+
+    if (code > 0) {
+      playing = true;
+    
+      // 音を鳴らす
+      int[] voiced_code = codes[code].voicing(center_note);
+      for (int i = 0; i < voiced_code.length; i++)
+        notes[voiced_code[i]].play();
+    }
+  }
+}
 
 // void mouseReleased() {
 //   // 音を止める

@@ -112,46 +112,85 @@ public class Circle {
     popMatrix();
   }
 
-  // public void setAngle(float angle) {
-  //   this.angle = angle;
-  // }
+  // スクリーン座標系からローカル座標系に変換
+  private PVector screenToLocal(float x, float y) {
+    PVector in = new PVector(x, y);
+    PVector out = new PVector();
 
-  // public int getCode(float mx, float my) {
-  //   pushMatrix();
-  //   translate(x, y);
-  //   scale(size);
+    PMatrix2D current_matrix = new PMatrix2D();
+    getMatrix(current_matrix);
 
-  //   // 位置を取得
-  //   PVector pos = screenToLocal(mouseX, mouseY);
-  //   float r = dist(0, 0, pos.x, pos.y);
-  //   float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
+    current_matrix.invert();
+    current_matrix.mult(in, out);
 
-  //   if (r > circles[0] || r < circles[4])
-  //     return;
+    return out;
+  }
 
-  //   // コードを取得
-  //   for (int i = 0; i < 4; i++) {
-  //     if (r >= circles[i + 1]) {
-  //       code_row = i;
-  //       break;
-  //     }
-  //   }
+  // 座標から半径と角度を算出
+  public float[] posToEuler(float mx, float my) {
+    pushMatrix();
+    translate(x, y);
+    scale(size);
 
-  //   if (code_row == 3) {
-  //     rotating = true;
-  //     start_angle = a;
-  //   } else {
-  //     playing = true;
-  //     code_pos = int(a * OCTAVE_NUM / TWO_PI + OCTAVE_NUM) % OCTAVE_NUM;
-    
-  //     // 音を鳴らす
-  //     int[] voiced_code = codes[display_codes[code_type][code_row][code_pos]].voicing(center_note);
-  //     for (int i = 0; i < voiced_code.length; i++)
-  //       notes[voiced_code[i]].play();
-  //   }
+    // 位置を取得
+    PVector pos = screenToLocal(mx, my);
+    float r = dist(0, 0, pos.x, pos.y);
+    float a = atan2(pos.x, -pos.y) + TWO_PI / OCTAVE_NUM / 2 - angle;
 
-  //   popMatrix();
-  // }
+    popMatrix();
+
+    return new float[]{r, a};
+  }
+
+  // 回転バーを掴んでいるか
+  public boolean isHoldingBar(float mx, float my) {
+    float[] euler = posToEuler(mx, my);
+    return euler[0] < circles[3] && euler[0] >= circles[4];
+  }
+
+  // 座標から位置を取得
+  public int[] getPos(float mx, float my) {
+    float[] euler = posToEuler(mx, my);
+    float r = euler[0];
+    float a = euler[1];
+
+    if (r > circles[0] || r < circles[3])
+      return new int[]{-1, -1};
+
+    // コードを取得
+    int row = 0;
+    int pos;
+
+    for (int i = 0; i < 3; i++) {
+      if (r >= circles[i + 1]) {
+        row = i;
+        break;
+      }
+    }
+
+    pos = int(a * OCTAVE_NUM / TWO_PI + OCTAVE_NUM) % OCTAVE_NUM;
+    return new int[]{row, pos};
+  }
+
+  // 座標から相対的な位置を取得
+  public int[] getRelativePos(float mx, float my) {
+    int[] pos = getPos(mx, my);
+
+    if (pos[1] != -1)
+      pos[1] = (pos[1] + key_note) % OCTAVE_NUM;
+
+    return pos;
+  }
+
+  // 座標からコードを取得
+  public int getCode(float mx, float my) {
+    int[] pos = getPos(mx, my);
+
+    if (pos[0] == -1)
+      return -1;
+
+    return display_codes[code_type][pos[0]][pos[1]];
+  }
 
   // void mouseReleased() {
   //   // 位置を取得
