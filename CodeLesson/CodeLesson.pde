@@ -4,6 +4,18 @@ import themidibus.*;
 final int INPUT_DEVICE = 0;
 final int OUTPUT_DEVICE = 5;
 
+// 演奏コード
+final int[] code_list = {
+  80, 46, 19, 12,
+  80, 43, 12, 22, 3,
+  80, 46, 19, 12,
+  80, 43,
+  80, 46, 19, 12,
+  80, 43, 12, 22, 3,
+  80, 46, 43, 12,
+  80, 10
+};
+
 // 描画
 final color BACK_COLOR = color(255, 255, 255);
 final color NOTE_COLOR = color(214, 214, 214);
@@ -19,8 +31,7 @@ int code_type = 0;
 float start_angle = 0;
 boolean rotating = false;
 
-int[] code_list = {3, 8, 10, 12, 17, 19};
-int cur_code = code_list[0];
+int cur_code = 0;
 Note[] notes = new Note[NOTE_NUM];
 boolean[] notes_on = new boolean[NOTE_NUM];
 
@@ -41,6 +52,10 @@ void setup() {
   size(640, 640);
   surface.setResizable(true);
 
+  // フォント
+  textFont(createFont("Arial", 24));
+  textAlign(RIGHT, BOTTOM);
+
   // 音の設定
   MidiBus.list();
   midi_bus = new MidiBus(this, INPUT_DEVICE, OUTPUT_DEVICE);
@@ -49,7 +64,7 @@ void setup() {
 
 void draw() {
   // 判定
-  Code code = codes[circle.relativeToAbsoluteCode(cur_code)];
+  Code code = codes[circle.relativeToAbsoluteCode(code_list[cur_code] % 36)];
   boolean[] code_on = new boolean[code.notes.length];
   boolean miss = true;
 
@@ -82,17 +97,9 @@ void draw() {
       }
     }
 
-    if (success) {
-      // 次のコードを決定
-      while (true) {
-        int next_code = code_list[int(random(code_list.length))];
-        
-        if (cur_code != next_code) {
-          cur_code = next_code;
-          break;
-        }
-      }
-    }
+    // 次のコードへ
+    if (success)
+      cur_code = (cur_code + 1) % code_list.length;
   }
 
   // スケーリング
@@ -105,8 +112,18 @@ void draw() {
   if (rotating)
     circle.addAngle(circle.posToEuler(mouseX, mouseY)[1] - start_angle);
 
-  circle.turnOnByRelativeCode(cur_code);
+  circle.turnOnByRelativeCode(code_list[cur_code] % 36);
   circle.draw();
+
+  // 現在の位置
+  pushMatrix();
+  translate(0.97, 0.97);
+  scale(0.0025);
+
+  fill(0);
+  text("Current: " + cur_code, 0, 0);
+
+  popMatrix();
 }
 
 void mousePressed() {
