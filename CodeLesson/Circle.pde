@@ -140,6 +140,34 @@ public class Circle {
     return new float[]{r, a};
   }
 
+  // 相対的なコードから絶対的なコードに変換
+  public int relativeToAbsoluteCode(int code) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 12; k++) {
+          if (display_codes[i][j][modOctave(k - key_note)] == code)
+            return display_codes[i][j][k];
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  // 絶対的なコードから相対的なコードに変換
+  public int absoluteToRelativeCode(int code) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 12; k++) {
+          if (display_codes[i][j][k] == code)
+            return display_codes[i][j][modOctave(k - key_note)];
+        }
+      }
+    }
+
+    return -1;
+  }
+
   // 回転バーを掴んでいるか
   public boolean isHoldingBar(float mx, float my) {
     float[] euler = posToEuler(mx, my);
@@ -190,6 +218,16 @@ public class Circle {
     return display_codes[code_type][pos[0]][pos[1]];
   }
 
+  // 座標から相対的なコードを取得
+  public int getRelativeCode(float mx, float my) {
+    int[] pos = getPos(mx, my);
+
+    if (pos[0] == -1)
+      return -1;
+
+    return display_codes[code_type][pos[0]][modOctave(pos[1] - key_note)];
+  }
+
   // コードの種類を変更
   public void setCodeType(int code_type) {
     this.code_type = code_type;
@@ -213,6 +251,21 @@ public class Circle {
       for (int j = 0; j < 3; j++) {
         for (int k = 0; k < 12; k++) {
           if (display_codes[i][j][k] == code) {
+            setCodeType(i);
+            turnOn(j, k);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // 相対的なコードを指定して点灯
+  public void turnOnByRelativeCode(int code) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 12; k++) {
+          if (display_codes[i][j][modOctave(k - key_note)] == code) {
             setCodeType(i);
             turnOn(j, k);
             break;

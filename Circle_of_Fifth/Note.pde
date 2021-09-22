@@ -32,7 +32,7 @@ public class Note {
       adsr.noteOff();
     }
   }
-  
+
   // 解放
   public void free() {
     adsr.unpatchAfterRelease(out);

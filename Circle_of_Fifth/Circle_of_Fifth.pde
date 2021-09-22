@@ -2,22 +2,21 @@ import ddf.minim.*;
 import ddf.minim.ugens.*;
 
 // 描画
-color back_color = color(255, 255, 255);
-color note_color = color(214, 214, 214);
-color play_color = color(255, 159, 159);
-color stroke_color = color(255, 255, 255);
-boolean rotating = false;
-float start_angle = 0;
+final color BACK_COLOR = color(255, 255, 255);
+final color NOTE_COLOR = color(214, 214, 214);
+final color PLAY_COLOR = color(255, 159, 159);
+final color STROKE_COLOR = color(255, 255, 255);
 
 // 音
-final float BASE_NOTE = 27.5;
-final int NOTE_NUM = 88;
 final int OCTAVE_NUM = 12;
+final float BASE_NOTE = 27.5;
 
 float fade_time = 0.1;
 float volume = 0.3;
 int center_note = 44;
 int code_type = 0;
+float start_angle = 0;
+boolean rotating = false;
 boolean playing = false;
 
 Minim minim;
@@ -55,7 +54,7 @@ void draw() {
   translate(width / 2.0, height / 2.0);
   scale(min(width, height) / 2.0, min(width, height) / 2.0);
 
-  background(back_color);
+  background(BACK_COLOR);
 
   // 五度圏表を描画
   if (rotating)
@@ -82,7 +81,7 @@ void mousePressed() {
   } else {
     int code = circle.getCode(mouseX, mouseY);
 
-    if (code > 0) {
+    if (code != -1) {
       playing = true;
       code_player.play(codes[code], center_note);
       circle.turnOnByCode(code);
@@ -112,7 +111,7 @@ void keyPressed() {
   if (keyCode == 38) center_note++;
 
   code_type = constrain(code_type, 0, 2);
-  center_note = constrain(center_note, 36, 52);
+  center_note = constrain(center_note, 32, 56);
 
   circle.setCodeType(code_type);
 }
