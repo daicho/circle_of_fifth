@@ -5,7 +5,7 @@ final int INPUT_DEVICE = 0;
 final int OUTPUT_DEVICE = 5;
 
 // 演奏コード
-final int[] code_list = {
+final int[] CODE_LIST = {
   80, 46, 19, 12,
   80, 43, 12, 22, 3,
   80, 46, 19, 12,
@@ -13,8 +13,10 @@ final int[] code_list = {
   80, 46, 19, 12,
   80, 43, 12, 22, 3,
   80, 46, 43, 12,
-  80, 10
+  80, 10, 3
 };
+
+final boolean EASY = false;
 
 // 描画
 final color BACK_COLOR = color(255, 255, 255);
@@ -27,6 +29,7 @@ final int OCTAVE_NUM = 12;
 final int NOTE_NUM = 127;
 final int BASE_POS = 21;
 
+int transpose = 0;
 int code_type = 0;
 float start_angle = 0;
 boolean rotating = false;
@@ -64,7 +67,7 @@ void setup() {
 
 void draw() {
   // 判定
-  Code code = codes[circle.relativeToAbsoluteCode(code_list[cur_code] % 36)];
+  Code code = codes[circle.relativeToAbsoluteCode(EASY ? CODE_LIST[cur_code] % 36 : CODE_LIST[cur_code])];
   boolean[] code_on = new boolean[code.notes.length];
   boolean miss = true;
 
@@ -99,7 +102,7 @@ void draw() {
 
     // 次のコードへ
     if (success)
-      cur_code = (cur_code + 1) % code_list.length;
+      cur_code = (cur_code + 1) % CODE_LIST.length;
   }
 
   // スケーリング
@@ -112,16 +115,16 @@ void draw() {
   if (rotating)
     circle.addAngle(circle.posToEuler(mouseX, mouseY)[1] - start_angle);
 
-  circle.turnOnByRelativeCode(code_list[cur_code] % 36);
+  circle.turnOnByRelativeCode(EASY ? CODE_LIST[cur_code] % 36 : CODE_LIST[cur_code]);
   circle.draw();
 
-  // 現在の位置
+  // トランスポーズ
   pushMatrix();
   translate(0.97, 0.97);
   scale(0.0025);
 
   fill(0);
-  text("Current: " + cur_code, 0, 0);
+  text("Transpose: " + ((transpose > 0) ? "+" : "") + transpose, 0, 0);
 
   popMatrix();
 }
@@ -143,20 +146,38 @@ void mouseReleased() {
 }
 
 void keyPressed() {
+  int prev_transpose = transpose;
+
   if (keyCode == 37) code_type--;
   if (keyCode == 39) code_type++;
+  if (keyCode == 40) transpose--;
+  if (keyCode == 38) transpose++;
+
   code_type = constrain(code_type, 0, 2);
+  transpose = constrain(transpose, -6, +6);
+
+  // コードの種類を変更
   circle.setCodeType(code_type);
+
+  // MIDI再出力
+  if (transpose != prev_transpose) {
+    for (int i = 0; i < notes_on.length; i++) {
+      if (notes_on[i]) {
+        midi_bus.sendNoteOff(0x05, constrain(i + prev_transpose, 0, NOTE_NUM), 63);
+        midi_bus.sendNoteOn(0x05, constrain(i + transpose, 0, NOTE_NUM), 63);
+      }
+    }
+  }
 }
 
 // MIDI入力
 void noteOn(int channel, int pitch, int velocity) {
-  midi_bus.sendNoteOn(channel, pitch, velocity);
+  midi_bus.sendNoteOn(channel, constrain(pitch + transpose, 0, NOTE_NUM), velocity);
   notes_on[pitch] = true;
 }
 
 void noteOff(int channel, int pitch, int velocity) {
-  midi_bus.sendNoteOff(channel, pitch, velocity);
+  midi_bus.sendNoteOff(channel, constrain(pitch + transpose, 0, NOTE_NUM), velocity);
   notes_on[pitch] = false;
 }
 
