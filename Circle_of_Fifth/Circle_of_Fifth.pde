@@ -22,9 +22,7 @@ boolean playing = false;
 
 Minim minim;
 AudioOutput sound_out;
-Note[] notes = new Note[NOTE_NUM];
-
-// 五度圏表
+CodePlayer code_player;
 Circle circle;
 
 // 1オクターブに収まるように剰余を求める
@@ -48,10 +46,7 @@ void setup() {
   // 音の設定
   minim = new Minim(this);
   sound_out = minim.getLineOut(Minim.STEREO);
-
-  for (int i = 0; i < NOTE_NUM; i++)
-    notes[i] = new Note(BASE_NOTE * pow(2, i / float(OCTAVE_NUM)), volume, fade_time, sound_out);
-
+  code_player = new CodePlayer(sound_out, volume, fade_time);
   circle = new Circle(0, 0, 1);
 }
 
@@ -81,6 +76,7 @@ void draw() {
 
 void mousePressed() {
   if (circle.isHoldingBar(mouseX, mouseY)) {
+    // 回転
     rotating = true;
     start_angle = circle.posToEuler(mouseX, mouseY)[1];
   } else {
@@ -88,12 +84,7 @@ void mousePressed() {
 
     if (code > 0) {
       playing = true;
-
-      // 音を鳴らす
-      int[] voiced_code = codes[code].voicing(center_note);
-      for (int i = 0; i < voiced_code.length; i++)
-        notes[voiced_code[i]].play();
-
+      code_player.play(codes[code], center_note);
       circle.turnOnByCode(code);
     }
   }
@@ -103,10 +94,7 @@ void mouseReleased() {
   // 音を止める
   if (playing) {
     playing = false;
-
-    for (int i = 0; i < NOTE_NUM; i++)
-      notes[i].pause();
-
+    code_player.stop();
     circle.turnOff();
   }
 

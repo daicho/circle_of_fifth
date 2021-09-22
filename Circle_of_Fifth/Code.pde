@@ -174,3 +174,38 @@ public class Code {
     return voiced_notes;
   }
 }
+
+// コード再生
+public class CodePlayer {
+  private AudioOutput out;
+  private float volume;
+  private float fade_time;
+  private Note[] notes = new Note[0];
+
+  public CodePlayer(AudioOutput out, float volume, float fade_time) {
+    this.out = out;
+    this.volume = volume;
+    this.fade_time = fade_time;
+  }
+
+  // 再生
+  public void play(Code code, int center) {
+    stop();
+
+    int[] voiced_notes = code.voicing(center);
+    notes = new Note[voiced_notes.length];
+
+    for (int i = 0; i < voiced_notes.length; i++) {
+      notes[i] = new Note(BASE_NOTE * pow(2, voiced_notes[i] / float(OCTAVE_NUM)), volume, fade_time, out);
+      notes[i].play();
+    }
+  }
+
+  // 停止
+  public void stop() {
+    for (int i = 0; i < notes.length; i++) {
+      notes[i].stop();
+      notes[i].free();
+    }
+  }
+}
