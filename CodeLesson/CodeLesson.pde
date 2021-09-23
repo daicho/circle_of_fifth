@@ -2,7 +2,7 @@ import themidibus.*;
 
 // 入力デバイス
 final int INPUT_DEVICE = 0;
-final int OUTPUT_DEVICE = 5;
+final int OUTPUT_DEVICE = -1;
 
 // 演奏コード
 final int[] CODE_LIST = {
@@ -29,17 +29,15 @@ final int OCTAVE_NUM = 12;
 final int NOTE_NUM = 127;
 final int BASE_POS = 21;
 
-int transpose = 0;
-int code_type = 0;
-float start_angle = 0;
-boolean rotating = false;
-
+MidiBus midi_bus;
 int cur_code = 0;
 Note[] notes = new Note[NOTE_NUM];
 boolean[] notes_on = new boolean[NOTE_NUM];
 
-MidiBus midi_bus;
+// 五度圏表
 Circle circle;
+float start_angle = 0;
+boolean rotating = false;
 
 // 1オクターブに収まるように剰余を求める
 int modOctave(int n) {
@@ -52,12 +50,8 @@ float modOctave(float n) {
 
 void setup() {
   // ウィンドウ設定
-  size(640, 640);
+  size(720, 720);
   surface.setResizable(true);
-
-  // フォント
-  textFont(createFont("Arial", 24));
-  textAlign(RIGHT, BOTTOM);
 
   // 音の設定
   MidiBus.list();
@@ -117,16 +111,6 @@ void draw() {
 
   circle.turnOnByRelativeCode(EASY ? CODE_LIST[cur_code] % 36 : CODE_LIST[cur_code]);
   circle.draw();
-
-  // トランスポーズ
-  pushMatrix();
-  translate(0.97, 0.97);
-  scale(0.0025);
-
-  fill(0);
-  text("Transpose: " + ((transpose > 0) ? "+" : "") + transpose, 0, 0);
-
-  popMatrix();
 }
 
 void mousePressed() {
@@ -145,42 +129,11 @@ void mouseReleased() {
   }
 }
 
-void keyPressed() {
-  int prev_transpose = transpose;
-
-  if (keyCode == 37) code_type--;
-  if (keyCode == 39) code_type++;
-  if (keyCode == 40) transpose--;
-  if (keyCode == 38) transpose++;
-
-  code_type = constrain(code_type, 0, 2);
-  transpose = constrain(transpose, -6, +6);
-
-  // コードの種類を変更
-  circle.setCodeType(code_type);
-
-  // MIDI再出力
-  if (transpose != prev_transpose) {
-    for (int i = 0; i < notes_on.length; i++) {
-      if (notes_on[i]) {
-        midi_bus.sendNoteOff(0x05, constrain(i + prev_transpose, 0, NOTE_NUM), 63);
-        midi_bus.sendNoteOn(0x05, constrain(i + transpose, 0, NOTE_NUM), 63);
-      }
-    }
-  }
-}
-
 // MIDI入力
 void noteOn(int channel, int pitch, int velocity) {
-  midi_bus.sendNoteOn(channel, constrain(pitch + transpose, 0, NOTE_NUM), velocity);
   notes_on[pitch] = true;
 }
 
 void noteOff(int channel, int pitch, int velocity) {
-  midi_bus.sendNoteOff(channel, constrain(pitch + transpose, 0, NOTE_NUM), velocity);
   notes_on[pitch] = false;
-}
-
-void controllerChange(int channel, int pitch, int velocity) {
-  midi_bus.sendControllerChange(channel, pitch, velocity);
 }

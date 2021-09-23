@@ -35,7 +35,7 @@ float modOctave(float n) {
 
 void setup() {
   // ウィンドウ設定
-  size(640, 640);
+  size(720, 720);
   surface.setResizable(true);
 
   // フォント

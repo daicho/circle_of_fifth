@@ -299,11 +299,16 @@ public class Circle {
   // キーを設定
   public void setKey(int key_note) {
     this.key_note = key_note;
+    angle = TWO_PI * -key_note / OCTAVE_NUM;
+  }
+
+  // キーを加算
+  public void addKey(int add_note) {
+    setKey(key_note + add_note);
   }
 
   // 現在の角度からキーを設定
   public void setKeyByAngle() {
-    key_note = modOctave(round(angle / -TWO_PI * OCTAVE_NUM));
-    angle = TWO_PI * -key_note / OCTAVE_NUM;
+    setKey(modOctave(round(angle / -TWO_PI * OCTAVE_NUM)));
   }
 }
