@@ -65,7 +65,7 @@ public class Circle {
 
       if (on && code_row == i) {
         fill(PLAY_COLOR);
-        arc(0, 0, circles[i], circles[i], TWO_PI / OCTAVE_NUM * (code_pos - 3.5), TWO_PI / OCTAVE_NUM * (code_pos - 2.5));
+        arc(0, 0, circles[i], circles[i], TWO_PI / OCTAVE * (code_pos - 3.5), TWO_PI / OCTAVE * (code_pos - 2.5));
       }
     }
 
@@ -84,21 +84,21 @@ public class Circle {
 
     // 線を描画
     pushMatrix();
-    rotate(-TWO_PI / OCTAVE_NUM / 2);
+    rotate(-TWO_PI / OCTAVE / 2);
 
-    for (int i = 0; i < OCTAVE_NUM; i++) {
+    for (int i = 0; i < OCTAVE; i++) {
       line(0, circles[0], 0, circles[3]);
-      rotate(TWO_PI / OCTAVE_NUM);
+      rotate(TWO_PI / OCTAVE);
     }
 
     popMatrix();
     popMatrix();
 
     // コードを描画
-    for (int i = 0; i < OCTAVE_NUM; i++) {
+    for (int i = 0; i < OCTAVE; i++) {
       for (int j = 0; j < 3; j++) {
         pushMatrix();
-        translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / OCTAVE_NUM * i + angle), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / OCTAVE_NUM * i + angle));
+        translate((circles[j] + circles[j + 1]) / 2 * sin(TWO_PI / OCTAVE * i + angle), (circles[j] + circles[j + 1]) / 2 * -cos(TWO_PI / OCTAVE * i + angle));
         scale(0.0022);
 
         shape(code_images[display_codes[code_type][j][i]]);
@@ -142,9 +142,9 @@ public class Circle {
 
   // 相対的なコードから絶対的なコードに変換
   public int relativeToAbsoluteCode(int code) {
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        for (int k = 0; k < 12; k++) {
+    for (int i = 0; i < display_codes.length; i++) {
+      for (int j = 0; j < display_codes[0].length; j++) {
+        for (int k = 0; k < display_codes[0][0].length; k++) {
           if (display_codes[i][j][modOctave(k - key_note)] == code)
             return display_codes[i][j][k];
         }
@@ -156,9 +156,9 @@ public class Circle {
 
   // 絶対的なコードから相対的なコードに変換
   public int absoluteToRelativeCode(int code) {
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        for (int k = 0; k < 12; k++) {
+    for (int i = 0; i < display_codes.length; i++) {
+      for (int j = 0; j < display_codes[0].length; j++) {
+        for (int k = 0; k < display_codes[0][0].length; k++) {
           if (display_codes[i][j][k] == code)
             return display_codes[i][j][modOctave(k - key_note)];
         }
@@ -194,7 +194,7 @@ public class Circle {
       }
     }
 
-    pos = modOctave(round(a * OCTAVE_NUM / TWO_PI));
+    pos = modOctave(round(a * OCTAVE / TWO_PI));
     return new int[]{row, pos};
   }
 
@@ -247,9 +247,9 @@ public class Circle {
 
   // コードを指定して点灯
   public void turnOnByCode(int code) {
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        for (int k = 0; k < 12; k++) {
+    for (int i = 0; i < display_codes.length; i++) {
+      for (int j = 0; j < display_codes[0].length; j++) {
+        for (int k = 0; k < display_codes[0][0].length; k++) {
           if (display_codes[i][j][k] == code) {
             setCodeType(i);
             turnOn(j, k);
@@ -262,9 +262,9 @@ public class Circle {
 
   // 相対的なコードを指定して点灯
   public void turnOnByRelativeCode(int code) {
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        for (int k = 0; k < 12; k++) {
+    for (int i = 0; i < display_codes.length; i++) {
+      for (int j = 0; j < display_codes[0].length; j++) {
+        for (int k = 0; k < display_codes[0][0].length; k++) {
           if (display_codes[i][j][modOctave(k - key_note)] == code) {
             setCodeType(i);
             turnOn(j, k);
@@ -299,7 +299,7 @@ public class Circle {
   // キーを設定
   public void setKey(int key_note) {
     this.key_note = key_note;
-    angle = TWO_PI * -key_note / OCTAVE_NUM;
+    angle = TWO_PI * -key_note / OCTAVE;
   }
 
   // キーを加算
@@ -309,6 +309,6 @@ public class Circle {
 
   // 現在の角度からキーを設定
   public void setKeyByAngle() {
-    setKey(modOctave(round(angle / -TWO_PI * OCTAVE_NUM)));
+    setKey(modOctave(round(angle / -TWO_PI * OCTAVE)));
   }
 }

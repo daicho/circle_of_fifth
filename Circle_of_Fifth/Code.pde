@@ -129,7 +129,7 @@ public class Code {
 
     for (int i = 0; i < notes.length; i++) {
       int p = (n + i) % notes.length;
-      inverted_notes[i] = floor(float(prev - notes[p] + OCTAVE_NUM) / OCTAVE_NUM) * OCTAVE_NUM + notes[p];
+      inverted_notes[i] = floor(float(prev - notes[p] + OCTAVE) / OCTAVE) * OCTAVE + notes[p];
       prev = inverted_notes[i];
     }
 
@@ -138,7 +138,7 @@ public class Code {
 
   // ボイジング
   int[] voicing(int center) {
-    float min_diff = OCTAVE_NUM;
+    float min_diff = OCTAVE;
     float min_ave = 0;
     int min_i = 0;
 
@@ -153,8 +153,8 @@ public class Code {
 
       // 中心音からの距離を算出
       diff = modOctave(ave - center);
-      if (diff > OCTAVE_NUM / 2.0)
-        diff = diff - OCTAVE_NUM;
+      if (diff > OCTAVE / 2.0)
+        diff = diff - OCTAVE;
 
       // 一番中心音に近いものを残す
       if (abs(diff) < abs(min_diff)) {
@@ -196,7 +196,7 @@ public class CodePlayer {
     notes = new Note[voiced_notes.length];
 
     for (int i = 0; i < voiced_notes.length; i++) {
-      notes[i] = new Note(BASE_NOTE * pow(2, voiced_notes[i] / float(OCTAVE_NUM)), volume, fade_time, out);
+      notes[i] = new Note(BASE_NOTE * pow(2, voiced_notes[i] / float(OCTAVE)), volume, fade_time, out);
       notes[i].play();
     }
   }

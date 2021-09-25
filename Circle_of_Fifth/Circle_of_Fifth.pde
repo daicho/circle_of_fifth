@@ -8,7 +8,7 @@ final color PLAY_COLOR = color(255, 159, 159);
 final color STROKE_COLOR = color(255, 255, 255);
 
 // 音
-final int OCTAVE_NUM = 12;
+final int OCTAVE = 12;
 final float BASE_NOTE = 27.5;
 
 float fade_time = 0.1;
@@ -26,11 +26,11 @@ Circle circle;
 
 // 1オクターブに収まるように剰余を求める
 int modOctave(int n) {
-  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+  return (n % OCTAVE + OCTAVE) % OCTAVE;
 }
 
 float modOctave(float n) {
-  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+  return (n % OCTAVE + OCTAVE) % OCTAVE;
 }
 
 void setup() {

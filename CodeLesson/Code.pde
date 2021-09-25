@@ -129,7 +129,7 @@ public class Code {
 
     for (int i = 0; i < notes.length; i++) {
       int p = (n + i) % notes.length;
-      inverted_notes[i] = floor(float(prev - notes[p] + OCTAVE_NUM) / OCTAVE_NUM) * OCTAVE_NUM + notes[p];
+      inverted_notes[i] = floor(float(prev - notes[p] + OCTAVE) / OCTAVE) * OCTAVE + notes[p];
       prev = inverted_notes[i];
     }
 
@@ -138,7 +138,7 @@ public class Code {
 
   // ボイジング
   int[] voicing(int center) {
-    float min_diff = OCTAVE_NUM;
+    float min_diff = OCTAVE;
     float min_ave = 0;
     int min_i = 0;
 
@@ -153,8 +153,8 @@ public class Code {
 
       // 中心音からの距離を算出
       diff = modOctave(ave - center);
-      if (diff > OCTAVE_NUM / 2.0)
-        diff = diff - OCTAVE_NUM;
+      if (diff > OCTAVE / 2.0)
+        diff = diff - OCTAVE;
 
       // 一番中心音に近いものを残す
       if (abs(diff) < abs(min_diff)) {
@@ -177,11 +177,28 @@ public class Code {
 
 // ファイルからコード読み込み
 public class CodeReader {
-  private int[] code_list;
+  private ArrayList<Integer> code_list;
   public int pos = 0;
+  public int transpose = 0;
 
   public CodeReader(String file_name) {
-    
+    this.code_list = new ArrayList<Integer>();
+    Table table = loadTable("codes/" + file_name, "csv");
+
+    for (int i = 0; i < table.getRowCount(); i++) {
+      for (int j = 0; j < table.getColumnCount(); j++) {
+        String code_name = table.getString(i, j);
+        if (code_name == null || code_name == "")
+          continue;
+
+        for (int k = 0; k < codes.length; k++) {
+          if (codes[k].name.equals(code_name)) {
+            code_list.add(k);
+            break;
+          }
+        }
+      }
+    }
   }
 
   // 位置を指定
@@ -189,9 +206,24 @@ public class CodeReader {
     this.pos = pos;
   }
 
-  // 次のコードを取得
-  public int getNextCode() {
-    setPos((pos + 1) % code_list.length);
-    return code_list[pos];
+  // 次のコードへ
+  public void next() {
+    setPos((pos + 1) % code_list.size());
+  }
+
+  // 現在のコードを取得
+  public int getCode() {
+    int code = code_list.get(pos);
+    return int(code / OCTAVE) * OCTAVE + modOctave(code + transpose);
+  }
+  
+  // トランスポーズを設定
+  public void setTranspose(int transpose) {
+    this.transpose = transpose;
+  }
+  
+  // トランスポーズを追加
+  public void addTranspose(int add_transpose) {
+    setTranspose(transpose + add_transpose);
   }
 }

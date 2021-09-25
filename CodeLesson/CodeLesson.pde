@@ -15,14 +15,13 @@ final color PLAY_COLOR = color(255, 159, 159);
 final color STROKE_COLOR = color(255, 255, 255);
 
 // 音
-final int OCTAVE_NUM = 12;
+final int OCTAVE = 12;
 final int NOTE_NUM = 127;
 final int BASE_POS = 21;
 
 MidiBus midi_bus;
-int cur_code = 0;
-Note[] notes = new Note[NOTE_NUM];
 boolean[] notes_on = new boolean[NOTE_NUM];
+CodeReader code_reader;
 
 // 五度圏表
 Circle circle;
@@ -31,11 +30,11 @@ boolean rotating = false;
 
 // 1オクターブに収まるように剰余を求める
 int modOctave(int n) {
-  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+  return (n % OCTAVE + OCTAVE) % OCTAVE;
 }
 
 float modOctave(float n) {
-  return (n % OCTAVE_NUM + OCTAVE_NUM) % OCTAVE_NUM;
+  return (n % OCTAVE + OCTAVE) % OCTAVE;
 }
 
 void setup() {
@@ -43,15 +42,20 @@ void setup() {
   size(720, 720);
   surface.setResizable(true);
 
+  // フォント
+  textFont(createFont("Arial", 24));
+  textAlign(RIGHT, BOTTOM);
+
   // 音の設定
   MidiBus.list();
   midi_bus = new MidiBus(this, INPUT_DEVICE, OUTPUT_DEVICE);
   circle = new Circle(0, 0, 1);
+  code_reader = new CodeReader(CODE_FILE);
 }
 
 void draw() {
   // 判定
-  Code code = codes[circle.relativeToAbsoluteCode(EASY ? CODE_LIST[cur_code] % 36 : CODE_LIST[cur_code])];
+  Code code = codes[EASY ? code_reader.getCode() % 36 : code_reader.getCode()];
   boolean[] code_on = new boolean[code.notes.length];
   boolean miss = true;
 
@@ -86,7 +90,7 @@ void draw() {
 
     // 次のコードへ
     if (success)
-      cur_code = (cur_code + 1) % CODE_LIST.length;
+      code_reader.next();
   }
 
   // スケーリング
@@ -99,8 +103,18 @@ void draw() {
   if (rotating)
     circle.addAngle(circle.posToEuler(mouseX, mouseY)[1] - start_angle);
 
-  circle.turnOnByRelativeCode(EASY ? CODE_LIST[cur_code] % 36 : CODE_LIST[cur_code]);
+  circle.turnOnByCode(EASY ? code_reader.getCode() % 36 : code_reader.getCode());
   circle.draw();
+
+  // トランスポーズ
+  pushMatrix();
+  translate(0.97, 0.97);
+  scale(0.0025);
+
+  fill(0);
+  text("Transpose: " + code_reader.transpose, 0, 0);
+
+  popMatrix();
 }
 
 void mousePressed() {
@@ -122,6 +136,8 @@ void mouseReleased() {
 void keyPressed() {
   if (keyCode == 37) circle.addKey(+1);
   if (keyCode == 39) circle.addKey(-1);
+  if (keyCode == 38) code_reader.addTranspose(+1);
+  if (keyCode == 40) code_reader.addTranspose(-1);
 }
 
 // MIDI入力
