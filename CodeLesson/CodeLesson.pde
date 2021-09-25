@@ -129,6 +129,11 @@ void mouseReleased() {
   }
 }
 
+void keyPressed() {
+  if (keyCode == 37) circle.addKey(+1);
+  if (keyCode == 39) circle.addKey(-1);
+}
+
 // MIDI入力
 void noteOn(int channel, int pitch, int velocity) {
   notes_on[pitch] = true;
