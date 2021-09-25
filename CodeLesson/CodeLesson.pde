@@ -5,17 +5,7 @@ final int INPUT_DEVICE = 0;
 final int OUTPUT_DEVICE = -1;
 
 // 演奏コード
-final int[] CODE_LIST = {
-  80, 46, 19, 12,
-  80, 43, 12, 22, 3,
-  80, 46, 19, 12,
-  80, 43,
-  80, 46, 19, 12,
-  80, 43, 12, 22, 3,
-  80, 46, 43, 12,
-  80, 10, 3
-};
-
+final String CODE_FILE = "夜に駆ける.txt";
 final boolean EASY = false;
 
 // 描画

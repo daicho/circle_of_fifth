@@ -45,7 +45,7 @@ public class Circle {
     // コードの画像を読み込み
     code_images = new PShape[codes.length];
     for (int i = 0; i < codes.length; i++)
-      code_images[i] = loadShape("codes/code_" + i + ".svg");
+      code_images[i] = loadShape("images/code_" + i + ".svg");
   }
 
   public void draw() {
