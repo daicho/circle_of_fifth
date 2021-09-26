@@ -192,12 +192,18 @@ public class CodeReader {
         if (code_name == null || code_name == "")
           continue;
 
+        boolean match = false;
+
         for (int k = 0; k < codes.length; k++) {
           if (codes[k].name.equals(code_name)) {
             code_list.add(k);
+            match = true;
             break;
           }
         }
+
+        if (!match)
+          println(code_name + " was not found");
       }
     }
   }
