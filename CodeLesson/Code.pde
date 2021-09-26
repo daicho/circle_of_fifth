@@ -181,7 +181,8 @@ public class CodeReader {
   public int pos = 0;
   public int transpose = 0;
 
-  public CodeReader(String file_name) {
+  public CodeReader(String file_name, int transpose) {
+    this.transpose = transpose;
     this.code_list = new ArrayList<Integer>();
     Table table = loadTable("codes/" + file_name, "csv");
 
@@ -199,6 +200,10 @@ public class CodeReader {
         }
       }
     }
+  }
+
+  public CodeReader(String file_name) {
+    this(file_name, 0);
   }
 
   // 位置を指定

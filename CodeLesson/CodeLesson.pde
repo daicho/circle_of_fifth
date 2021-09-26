@@ -6,6 +6,7 @@ final int OUTPUT_DEVICE = -1;
 
 // 演奏コード
 final String CODE_FILE = "夜に駆ける.txt";
+final int TRANSPOSE = -3;
 final boolean EASY = false;
 
 // 描画
@@ -50,7 +51,7 @@ void setup() {
   MidiBus.list();
   midi_bus = new MidiBus(this, INPUT_DEVICE, OUTPUT_DEVICE);
   circle = new Circle(0, 0, 1);
-  code_reader = new CodeReader(CODE_FILE);
+  code_reader = new CodeReader(CODE_FILE, TRANSPOSE);
 }
 
 void draw() {
